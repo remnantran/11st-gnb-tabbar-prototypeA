@@ -80,6 +80,72 @@
   .glass .items img, .solid .items img { height:auto; }
   .solid { position:absolute; border-radius:999px; background:#FF0038;
     box-shadow: 0 3px 10px rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.14); }
+  /* ---------- 둥둥이: 홈 맨 아래(삼성전자 갤럭시 배너 끝) 도달 시 탭바 좌측에 젤리처럼 등장 ----------
+     Figma 홈-둥둥이: 둥둥이 16,150 56x56 (shadow 0 1 6 #000 10%), 탭 pill 16→80 / 343→280, 칸 69→56 */
+  .tab > .pill-anim { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
+    left .5s var(--ease), width .5s var(--ease); }
+  .pill-anim .slot { transition: margin .5s var(--ease); }
+  .tab.dd-on .pill-anim { left:80px !important; width:280px !important; }
+  .tab.dd-on .pill-anim .slot { margin:0 -6.5px; }
+  .tab .hot.mv { transition: left .5s var(--ease), width .5s var(--ease); }
+  .tab.dd-on .hot.go-home { left:192px !important; width:56px !important; }
+  .tab.dd-on .hot.go-my   { left:248px !important; width:56px !important; }
+  .dd-wrap { position:absolute; left:16px; top:150px; width:56px; height:56px; pointer-events:none; }
+  /* 둥둥이 본체: 접힘 56x56 원 ↔ 펼침 118x56 알약 (Figma 홈-둥둥이-펼쳐짐). 반지름 28 유지한 채 폭만 늘어남 */
+  .dd { position:absolute; left:0; top:0; width:56px; height:56px; border-radius:28px; overflow:hidden;
+    box-shadow:0 1px 6px rgba(0,0,0,.10);
+    transform-origin:50% 100%; transform:translateY(110px); visibility:hidden;
+    transition: transform .32s cubic-bezier(.5,0,.75,0), visibility 0s linear .32s, width .3s var(--ease); }
+  .dd img { position:absolute; left:0; top:0; height:56px; display:block; user-select:none; -webkit-user-drag:none; }
+  /* 하나의 바탕(주황→핑크, 테두리까지 꽉 채운 그림)을 .dd의 둥근 클립이 드러내는 방식
+     → 접힘/펼침 중에 따로 페이드되는 원형 그림이 없어서 외곽선이 생기지 않음 */
+  .dd img.dd-base { width:118px; }
+  /* 문구: Figma 접힘 x56 → 펼침 x46. 펼칠 때 오른쪽에서 10px 미끄러지며 나타남 */
+  .dd img.dd-text { left:47px; top:13.5px; width:52.5px; height:28px; opacity:0; transform:translateX(10px);
+    transition: opacity .2s ease, transform .3s var(--ease); }
+  .tab.dd-open .dd img.dd-text { opacity:1; transform:none;
+    transition: opacity .36s ease .1s, transform .5s cubic-bezier(.22,1,.36,1) .06s; }
+  /* 펼치기: 폭은 부드럽게 감속(ease-out) */
+  .tab.dd-open .dd { width:118px; }
+  .tab.dd-on .dd { transition: width .56s cubic-bezier(.22,1,.36,1); }
+  .tab.dd-on:not(.dd-open) .dd { transition: width .44s var(--ease); }
+  /* 펼치면 오른쪽 탭바는 화면 밖 오른쪽으로 밀려남 (Figma: x142) */
+  .tab.dd-open .pill-anim { left:142px !important; transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
+    left .56s cubic-bezier(.22,1,.36,1), width .5s var(--ease); }
+  .tab.dd-open .hot.go-home { left:254px !important; width:56px !important; }
+  .tab.dd-open .hot.go-my   { left:310px !important; width:56px !important; }
+  /* 펼침 유도 화살표 (Figma arrow(삭제금지) 42.2,22.5 10x12, 흰 1.5px 쉐브론 2개)
+     - 화이트 그라데이션 마스크: 좌측 투명 → 우측 진한 흰색
+     - 쉐브론이 좌→우로 계속 흘러가며, 왼쪽에서 스며 나와 오른쪽 끝에서 사라짐 */
+  .dd-arrow { position:absolute; right:.8px; top:22.5px; width:16px; height:12px; overflow:visible; pointer-events:none;
+    transition: opacity .16s ease, right .56s cubic-bezier(.22,1,.36,1); }
+  /* 펼친 상태: 오른쪽 끝을 따라 이동(Figma 103,22.5) + 좌우 반전 → 왼쪽을 가리키며 우→좌로 흐름, 왼쪽이 진함 */
+  .tab.dd-open .dd-arrow { right:2px; }
+  .dd-arrow.flip { transform: scaleX(-1); }
+  .dd-arrow.swap { opacity:0; }
+  .dd-arrow .chev { fill:none; stroke:#fff; stroke-width:1.5px; animation: chev-flow 1.5s linear infinite; }
+  .dd-arrow .chev.b { animation-delay:-.75s; }
+  @keyframes chev-flow {
+    0%   { transform: translateX(-3px); opacity:0; }
+    25%  { opacity:1; }
+    72%  { opacity:1; }
+    100% { transform: translateX(6px);  opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .dd-arrow .chev { animation:none; } .dd-arrow .chev.b { transform:translateX(4px); } }
+  .tab.dd-on .dd { visibility:visible; pointer-events:auto; cursor:pointer;
+    animation: jelly-up .95s linear .12s both; }
+  /* 띠옹~! : 형태 변형 없이 위치만 — 힘차게 튀어 올라 살짝 지나쳤다가 탱글탱글 되돌아오며 멈춤 */
+  @keyframes jelly-up {
+    0%   { transform: translateY(110px); animation-timing-function: cubic-bezier(.2,.7,.3,1); }
+    38%  { transform: translateY(-18px); animation-timing-function: cubic-bezier(.5,0,.6,1); }
+    54%  { transform: translateY(5px);   animation-timing-function: ease-out; }
+    66%  { transform: translateY(-7px);  animation-timing-function: ease-in-out; }
+    78%  { transform: translateY(2px);   animation-timing-function: ease-in-out; }
+    89%  { transform: translateY(-1px);  animation-timing-function: ease-in-out; }
+    100% { transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .tab.dd-on .dd { animation:none; transform:none; } }
+
   .hot { position:absolute; pointer-events:auto; cursor:pointer; border-radius:12px; }
   .hot:active { background:rgba(0,0,0,.06); }
   body.debug .hot, body.debug .el.pressable { outline:2px dashed rgba(255,0,56,.8); }
@@ -118,12 +184,26 @@
   <div class="tabs">
     <div class="tab" data-screen="home">
       <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
-      <div class="glass" style="left:16px;top:150px;width:343px;height:56px"><div class="items">
-        <img src="img/tab/home_1.png" style="width:69px"><img src="img/tab/home_2.png" style="width:69px"><img src="img/tab/home_3.png" style="width:69px"><img src="img/tab/home_4.png" style="width:69px"><img src="img/tab/home_5.png" style="width:69px">
+      <div class="glass pill-anim" id="homePill" style="left:16px;top:150px;width:343px;height:56px"><div class="items">
+        <img class="slot" src="img/tab/home_1.png" style="width:69px"><img class="slot" src="img/tab/home_2.png" style="width:69px"><img class="slot" src="img/tab/home_3.png" style="width:69px"><img class="slot" src="img/tab/home_4.png" style="width:69px"><img class="slot" src="img/tab/home_5.png" style="width:69px">
       </div></div>
+      <div class="dd-wrap"><div class="dd" title="둥둥이"><img class="dd-base" src="img/tab/dungdung_base.png" alt="둥둥이"><img class="dd-text" src="img/tab/dungdung_text.png" alt="LG전자 1DAY 특가"><svg class="dd-arrow" viewBox="-3 0 16 12" aria-hidden="true">
+        <defs>
+          <linearGradient id="ddFade" gradientUnits="userSpaceOnUse" x1="-3" y1="0" x2="13" y2="0">
+            <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".25" stop-color="#fff" stop-opacity=".2"/>
+            <stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset=".75" stop-color="#fff" stop-opacity="1"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="1"/>
+          </linearGradient>
+          <mask id="ddMask" maskUnits="userSpaceOnUse" x="-3" y="-1" width="16" height="14"><rect x="-3" y="-1" width="16" height="14" fill="url(#ddFade)"/></mask>
+        </defs>
+        <g mask="url(#ddMask)">
+          <path class="chev a" d="M1.17 .83 4.83 5.74 1.17 10.83"/>
+          <path class="chev b" d="M1.17 .83 4.83 5.74 1.17 10.83"/>
+        </g>
+      </svg></div></div>
       <a class="hot" data-top style="left:315px;top:91px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
-      <a class="hot" style="left:153px;top:149px;width:69px;height:56px" data-go="home" title="홈"></a>
-      <a class="hot" style="left:222px;top:149px;width:69px;height:56px" data-go="my" title="나의11번가"></a>
+      <a class="hot mv go-home" style="left:153px;top:149px;width:69px;height:56px" data-go="home" title="홈"></a>
+      <a class="hot mv go-my" style="left:222px;top:149px;width:69px;height:56px" data-go="my" title="나의11번가"></a>
     </div>
     <div class="tab off" data-screen="my">
       <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
@@ -250,16 +330,20 @@
     const ua = navigator.userAgent;
     return /Chrome|Chromium|Edg\//.test(ua) && !/Firefox/.test(ua);
   })();
-  function buildGlassFilters() {
+  const NS = 'http://www.w3.org/2000/svg';
+  let glassSvg = null;
+  const glassCache = {};
+  // el에 w x h 크기용 굴절 필터 적용 (크기가 바뀌는 pill은 바뀐 크기로 다시 호출)
+  function applyGlass(el, w, h) {
     if (!supportsRefraction) return;
-    const NS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('width', 0); svg.setAttribute('height', 0);
-    svg.style.position = 'absolute';
-    document.body.appendChild(svg);
-    const cache = {};
-    document.querySelectorAll('.glass').forEach(el => {
-      const w = Math.round(parseFloat(el.style.width)), h = Math.round(parseFloat(el.style.height));
+    if (!glassSvg) {
+      glassSvg = document.createElementNS(NS, 'svg');
+      glassSvg.setAttribute('width', 0); glassSvg.setAttribute('height', 0);
+      glassSvg.style.position = 'absolute';
+      document.body.appendChild(glassSvg);
+    }
+    const svg = glassSvg, cache = glassCache;
+    {
       const key = w + 'x' + h;
       if (!cache[key]) {
         // 둥근 사각형 가장자리에서 안쪽으로 굽는 변위 맵
@@ -299,9 +383,47 @@
       }
       const v = `blur(${GLASS.blur}px) url(#${cache[key]}) saturate(1.8)`;
       el.style.backdropFilter = v; el.style.webkitBackdropFilter = v;
-    });
+    }
   }
-  buildGlassFilters();
+  document.querySelectorAll('.glass').forEach(el =>
+    applyGlass(el, Math.round(parseFloat(el.style.width)), Math.round(parseFloat(el.style.height))));
+
+  /* ---------- 둥둥이 ----------
+     홈 스크롤이 맨 아래(삼성전자 갤럭시 배너 끝)에 닿으면 등장, 한 번 나오면 계속 고정 노출.
+     펼친 상태에서 위로 스크롤하면 무조건 접힘 */
+  const homeTab = document.querySelector('.tab[data-screen=home]');
+  const homePill = document.getElementById('homePill');
+  const homeScroll = document.querySelector('#home .scroll');
+  let ddOn = false, ddOpen = false, ddSwapTimer = 0;
+  const ddEl = homeTab.querySelector('.dd'), ddArrow = homeTab.querySelector('.dd-arrow');
+  function setDungdung(on) {
+    if (on === ddOn) return;
+    ddOn = on;
+    if (!on) setDdOpen(false, true);
+    homeTab.classList.toggle('dd-on', on);
+  }
+  // 펼침/접힘: 화살표는 잠깐 사라졌다가, 거의 다 펼쳐질 때 반대 방향으로 바뀌어 다시 나타남
+  function setDdOpen(open, instant) {
+    if (open === ddOpen) return;
+    ddOpen = open;
+    clearTimeout(ddSwapTimer);
+    homeTab.classList.toggle('dd-open', open);
+    if (instant) { ddArrow.classList.toggle('flip', open); ddArrow.classList.remove('swap'); return; }
+    ddArrow.classList.add('swap');
+    ddSwapTimer = setTimeout(() => { ddArrow.classList.toggle('flip', open); ddArrow.classList.remove('swap'); }, 380);
+  }
+  ddEl.addEventListener('click', () => { if (ddOn) setDdOpen(!ddOpen); });
+  homePill.addEventListener('transitionend', e => {
+    if (e.target === homePill && e.propertyName === 'width') applyGlass(homePill, ddOn ? 280 : 343, 56);
+  });
+  let lastTop = 0;
+  homeScroll.addEventListener('scroll', () => {
+    const top = homeScroll.scrollTop;
+    const rest = homeScroll.scrollHeight - homeScroll.clientHeight - top;
+    if (rest <= 4) setDungdung(true);              // 바닥 도달 → 등장 (이후 계속 유지)
+    if (ddOpen && top < lastTop - 1) setDdOpen(false); // 펼친 상태에서 위로 스크롤하면 무조건 접힘
+    lastTop = top;
+  }, { passive:true });
 
   /* ---------- 스크롤 영역 높이 ---------- */
   function layout(sc) {
