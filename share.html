@@ -1,0 +1,382 @@
+<title>11번가 탭바 프로토타입</title>
+<style>
+  :root {
+    --gap:#eee;
+    --ease: cubic-bezier(.65,0,.35,1);   /* ease-in-out */
+    --dur: 460ms;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:#1c1c1e; overflow:hidden;
+    font-family:-apple-system, "Apple SD Gothic Neo", "Pretendard", sans-serif; }
+  .stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  .phone { position:relative; width:375px; height:867px; background:#fff; overflow:hidden;
+    border-radius:36px; box-shadow:0 20px 60px rgba(0,0,0,.5); transform-origin:center center; }
+
+  /* 화면 */
+  .screen { position:absolute; inset:0; background:#fff; transition:transform .38s var(--ease), opacity .24s ease; }
+  .screen.hidden { visibility:hidden; pointer-events:none; }
+  .screen.push-in  { transform:translateX(100%); }
+  .screen.push-out { transform:translateX(-28%); }
+  .screen.fade { opacity:0; }
+  .scroll { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .content { position:relative; width:375px; background:#fff; } /* SCREEN fill: white */
+  .content img.sec { position:absolute; left:0; width:375px; display:block; user-select:none; -webkit-user-drag:none; }
+
+  /* 고정 GNB 레이어 */
+  .nav { position:absolute; left:0; top:0; width:375px; z-index:10; pointer-events:none; }
+  .nav-bg { position:absolute; left:0; top:0; width:375px; height:148px; background:#fff;
+    transition:height var(--dur) var(--ease); }
+  .el { position:absolute; background-repeat:no-repeat; background-size:375px auto; pointer-events:auto;
+    will-change:transform, opacity, clip-path;
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), clip-path var(--dur) var(--ease);
+    clip-path: inset(0 0 0 0 round 26px); }
+  .el.wide { clip-path: inset(0 0 0 0); }
+  /* BG 투명(0%) 화면용: 버튼 배경은 CSS (Figma: #FFF 80%, shadow 0 2 6 #000 6% + 0 0 1 #000 28%) */
+  .el.pill { clip-path: inset(0 0 0 0 round 30px); background-image:none !important; }
+  .el.pill .bg { position:absolute; inset:8px; border-radius:999px; background:rgba(255,255,255,.8);
+    box-shadow: 0 2px 6px rgba(0,0,0,.06), 0 0 1px rgba(0,0,0,.28); }
+  .el.pill .fg { position:absolute; inset:0; background-repeat:no-repeat; background-size:375px auto; }
+  /* 들어오기 전 / 나간 뒤 상태 */
+  .el.off { opacity:0; pointer-events:none; }
+  .el.off.a-left  { clip-path: inset(0 calc(100% - 52px) 0 0 round 26px); transform: translateX(-6px) scale(.94); }
+  .el.off.a-right { clip-path: inset(0 0 0 calc(100% - 52px) round 26px); transform: translateX(6px) scale(.94); }
+  .el.pill.off.a-left  { clip-path: inset(0 calc(100% - 60px) 0 0 round 30px); }
+  .el.pill.off.a-right { clip-path: inset(0 0 0 calc(100% - 60px) round 30px); }
+  .el.off.a-pop   { transform: scale(.6); }
+  .el.off.a-down  { transform: translateY(-10px); }
+  .el.leaving { transition-duration: calc(var(--dur) * .7); }
+  .el.pressable:active { filter:brightness(.94); }
+
+  /* 고정 탭바 레이어 */
+  .tabs { position:absolute; left:0; bottom:0; width:375px; height:226px; z-index:10; pointer-events:none; }
+  .tab { position:absolute; inset:0; pointer-events:none; }
+  /* 부모에 opacity를 주면 backdrop-filter가 끊기므로, 전환 애니메이션은 각 요소에 직접 */
+  .tab > * { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+    transition-delay: inherit; }
+  .tab.off > * { opacity:0; transform: translateY(14px) scale(.97); }
+  .tab.off .hot { pointer-events:none; }
+  .tab img { display:block; user-select:none; -webkit-user-drag:none; }
+
+  /* Figma: fill #FFF 70% + GLASS(radius 21, refraction .86, depth 25, light -45°, intensity .8) + drop shadow 0 1 6 #000 10% */
+  .glass { position:absolute; border-radius:999px; overflow:hidden; isolation:isolate;
+    --fill: .7;
+    background: rgba(255,255,255,var(--fill));
+    -webkit-backdrop-filter: blur(10.5px) saturate(1.8);
+            backdrop-filter: blur(10.5px) saturate(1.8);
+    box-shadow:
+      0 1px 6px rgba(0,0,0,.10),
+      inset 1.2px 1.2px .5px -.5px rgba(255,255,255,.95),      /* 좌상단 빛 (-45°) */
+      inset -1px -1px .5px -.5px rgba(255,255,255,.45),         /* 우하단 반사 */
+      inset 0 0 0 .5px rgba(255,255,255,.55),
+      inset 0 -8px 16px -10px rgba(255,255,255,.6); }
+  .glass::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:-1;
+    background: linear-gradient(135deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 70%, rgba(255,255,255,.22) 100%); }
+  .glass.f60 { --fill:.6; } .glass.f80 { --fill:.8; }
+  .glass.stroke-red { box-shadow:
+      0 1px 6px rgba(0,0,0,.10), inset 0 0 0 1px rgba(255,0,56,.9),
+      inset 1.5px 1.5px .5px -.5px rgba(255,255,255,.95); }
+  .glass .items, .solid .items { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .glass .items img, .solid .items img { height:auto; }
+  .solid { position:absolute; border-radius:999px; background:#FF0038;
+    box-shadow: 0 3px 10px rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.14); }
+  .hot { position:absolute; pointer-events:auto; cursor:pointer; border-radius:12px; }
+  .hot:active { background:rgba(0,0,0,.06); }
+  body.debug .hot, body.debug .el.pressable { outline:2px dashed rgba(255,0,56,.8); }
+
+  .hint { position:fixed; left:16px; bottom:16px; color:#8e8e93; font-size:12px; line-height:1.5; }
+  .hint kbd { background:#2c2c2e; color:#ddd; border-radius:4px; padding:1px 5px; font-family:inherit; }
+  @media (max-width:500px) { .phone { border-radius:0; box-shadow:none; } .hint { display:none; } }
+  @media (prefers-reduced-motion: reduce) { :root { --dur: 1ms; } .screen { transition:none; } }
+</style>
+<div class="stage"><div class="phone" id="phone">
+
+  <section class="screen" id="home">
+    <div class="scroll"><div class="content">
+      <!-- SCREEN 안에서 CONTENTS(GNB 아래 y=148부터)만 스크롤 -->
+      <img class="sec" src="img/home_contents.png" style="top:148px">
+    </div></div>
+  </section>
+
+  <section class="screen hidden" id="my">
+    <div class="scroll"><div class="content">
+      <img class="sec" src="img/my_contents.png" style="top:104px">
+      <a class="hot" style="left:0;top:488px;width:375px;height:96px;border-radius:0" data-push="pdp" title="비비고 왕교자"></a>
+    </div></div>
+  </section>
+
+  <section class="screen hidden" id="pdp">
+    <div class="scroll"><div class="content">
+      <img class="sec" src="img/pdp_contents.png" style="top:104px">
+      <img class="sec" src="img/pdp_live.png" style="top:1243px" onerror="this.remove()">
+    </div></div>
+  </section>
+
+  <!-- 고정 GNB: 버튼 단위로 잘라서 화면 전환 시 개별 애니메이션 -->
+  <div class="nav" id="nav"><div class="nav-bg" id="navBg"></div></div>
+
+  <!-- 고정 탭바 -->
+  <div class="tabs">
+    <div class="tab" data-screen="home">
+      <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
+      <div class="glass" style="left:16px;top:150px;width:343px;height:56px"><div class="items">
+        <img src="img/tab/home_1.png" style="width:69px"><img src="img/tab/home_2.png" style="width:69px"><img src="img/tab/home_3.png" style="width:69px"><img src="img/tab/home_4.png" style="width:69px"><img src="img/tab/home_5.png" style="width:69px">
+      </div></div>
+      <a class="hot" data-top style="left:315px;top:91px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
+      <a class="hot" style="left:153px;top:149px;width:69px;height:56px" data-go="home" title="홈"></a>
+      <a class="hot" style="left:222px;top:149px;width:69px;height:56px" data-go="my" title="나의11번가"></a>
+    </div>
+    <div class="tab off" data-screen="my">
+      <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
+      <div class="glass" style="left:16px;top:150px;width:343px;height:56px"><div class="items">
+        <img src="img/tab/my_1.png" style="width:49px"><img src="img/tab/my_2.png" style="width:49px"><img src="img/tab/my_3.png" style="width:49px"><img src="img/tab/my_4.png" style="width:49px"><img src="img/tab/my_5.png" style="width:49px"><img src="img/tab/my_6.png" style="width:49px"><img src="img/tab/my_7.png" style="width:49px">
+      </div></div>
+      <a class="hot" data-top style="left:315px;top:91px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
+      <a class="hot" style="left:16px;top:149px;width:49px;height:56px" data-go="home" title="뒤로"></a>
+      <a class="hot" style="left:163px;top:149px;width:49px;height:56px" data-go="home" title="홈"></a>
+      <a class="hot" style="left:212px;top:149px;width:49px;height:56px" data-go="my" title="나의11번가"></a>
+    </div>
+    <div class="tab off" data-screen="pdp">
+      <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
+      <div class="glass f60" style="left:16px;top:150px;width:56px;height:56px"><div class="items"><img src="img/tab/pdp_gift.png" style="width:56px"></div></div>
+      <div class="glass f80 stroke-red" style="left:80px;top:150px;width:136px;height:56px"><div class="items"><img src="img/tab/pdp_cart.png" style="width:80px"></div></div>
+      <div class="solid" style="left:224px;top:150px;width:136px;height:56px"><div class="items"><img src="img/tab/pdp_buy.png" style="width:79.5px"></div></div>
+      <a class="hot" data-top style="left:315px;top:91px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
+    </div>
+  </div>
+
+</div></div>
+<div class="hint">GNB·탭바 아이디에이션 프로토타입 · 탭바 <b>나의11번가</b> → 가운데 <b>비비고 배너</b> → PDP<br><kbd>H</kbd> 핫스팟 보기 · <kbd>←</kbd> 뒤로</div>
+
+<script>
+(() => {
+  const TAB_SPACE = 110;
+  const phone = document.getElementById('phone');
+  const nav = document.getElementById('nav');
+  const navBg = document.getElementById('navBg');
+  const byId = id => document.getElementById(id);
+
+  /* ---------- GNB 요소 정의 (375 기준 좌표, 그림자 여유 4px 포함) ---------- */
+  // key가 같은 요소는 같은 "자리"로 보고, 화면이 바뀌면 나가고/들어오며 모핑
+  const GNB = {
+    home: { h:148, img:'img/home_gnb.png', els:{
+      status: { x:0,   y:0,   w:375, h:44, wide:true },
+      left:   { x:12,  y:46,  w:299, h:52, anim:'a-left' },              // 검색바
+      right:  { x:311, y:46,  w:52,  h:52, anim:'a-right' },             // 장바구니
+      tabs:   { x:0,   y:100, w:375, h:48, wide:true, anim:'a-down' },   // 카테고리 탭
+    }},
+    // 나의11번가·PDP: BG opacity 0 → GNB 배경 없음, 스크롤 콘텐츠가 버튼 뒤로 그대로 지나감
+    // 버튼 박스 = Figma 버튼 영역 + 사방 8px(그림자 여유)
+    my: { h:0, img:'img/my_gnb_fg.png', els:{
+      status: { x:0,   y:0,   w:375, h:44, wide:true },
+      left:   { x:8,   y:42,  w:126, h:60, anim:'a-left', pill:true },               // 허란님 + 설정
+      right:  { x:245, y:42,  w:122, h:60, anim:'a-right', pill:true },              // 검색 + 장바구니
+    }},
+    pdp: { h:0, img:'img/pdp_gnb_fg.png', els:{
+      status: { x:0,   y:0,   w:375, h:44, wide:true },
+      back:   { x:8,   y:42,  w:60,  h:60, anim:'a-pop', action:'back', pill:true }, // 뒤로
+      left:   { x:60,  y:42,  w:156, h:60, anim:'a-left', pill:true },               // 11번가 | 비비고
+      right:  { x:245, y:42,  w:122, h:60, anim:'a-right', pill:true },              // 검색 + 장바구니
+    }},
+  };
+  // 상태바는 세 화면 공통으로 투명 배경 버전 사용 (홈은 흰 nav-bg 위에 놓임)
+  Object.values(GNB).forEach(g => g.els.status.img = 'img/my_gnb_fg.png');
+
+  let live = {}; // key -> {node, sig}
+  function makeEl(screen, key, d) {
+    const n = document.createElement('div');
+    n.className = 'el' + (d.wide ? ' wide' : '') + (d.anim ? ' ' + d.anim : '') + (d.action ? ' pressable' : '') + (d.pill ? ' pill' : '');
+    const bgImg = `url(${d.img || GNB[screen].img})`, bgPos = `-${d.x}px -${d.y}px`;
+    Object.assign(n.style, {
+      left: d.x + 'px', top: d.y + 'px', width: d.w + 'px', height: d.h + 'px',
+      transformOrigin: d.anim === 'a-right' ? 'right center' : d.anim === 'a-pop' ? 'center' : 'left center',
+    });
+    if (d.pill) {
+      n.innerHTML = '<div class="bg"></div><div class="fg"></div>';
+      Object.assign(n.lastChild.style, { backgroundImage: bgImg, backgroundPosition: bgPos });
+    } else Object.assign(n.style, { backgroundImage: bgImg, backgroundPosition: bgPos });
+    if (d.action === 'back') { n.title = '뒤로'; n.addEventListener('click', () => back()); }
+    return n;
+  }
+  // 픽셀이 같은 요소(위치·크기 동일 + 같은 모양)는 그대로 둠
+  const SAME = { 'my:right':'R', 'pdp:right':'R', 'home:status':'S', 'my:status':'S', 'pdp:status':'S' };
+  const sig = (screen, key, d) => SAME[screen + ':' + key] || `${screen}:${key}:${d.x},${d.y},${d.w}`;
+
+  function setNav(screen, instant) {
+    const conf = GNB[screen];
+    navBg.style.height = conf.h + 'px';
+    const next = {};
+    const keys = new Set([...Object.keys(live), ...Object.keys(conf.els)]);
+    let i = 0;
+    keys.forEach(key => {
+      const cur = live[key], d = conf.els[key];
+      const s = d && sig(screen, key, d);
+      if (cur && d && cur.sig === s) { next[key] = cur; return; }      // 동일 → 유지
+      const stagger = (i++) * 45;
+      if (cur) {                                                       // 나가는 버튼: ease-in
+        const n = cur.node;
+        n.classList.add('leaving');
+        n.style.transitionDelay = (instant ? 0 : stagger * .5) + 'ms';
+        n.classList.add('off');
+        setTimeout(() => n.remove(), instant ? 0 : 520);
+      }
+      if (d) {                                                         // 들어오는 버튼: ease-out
+        const n = makeEl(screen, key, d);
+        if (!instant) {
+          n.classList.add('off');
+          n.style.transitionDelay = (130 + stagger) + 'ms';
+          nav.appendChild(n);
+          n.getBoundingClientRect();
+          requestAnimationFrame(() => n.classList.remove('off'));
+        } else nav.appendChild(n);
+        next[key] = { node:n, sig:s };
+      }
+    });
+    live = next;
+  }
+
+  function setTab(screen) {
+    document.querySelectorAll('.tab').forEach(t => {
+      const on = t.dataset.screen === screen;
+      t.style.transitionDelay = on ? '140ms' : '0ms';
+      t.classList.toggle('off', !on);
+    });
+  }
+
+  /* ---------- Glass 굴절(refraction)·분산(dispersion): SVG 변위 필터 ----------
+     Figma GLASS: refraction .86, depth 25, dispersion .5, frost radius 21
+     Chromium 계열만 backdrop-filter의 url() 필터를 지원 → 그 외 브라우저는 블러만 적용 */
+  const GLASS = { refraction:.86, depth:25, dispersion:.5, blur:10.5 };
+  const supportsRefraction = (() => {
+    const ua = navigator.userAgent;
+    return /Chrome|Chromium|Edg\//.test(ua) && !/Firefox/.test(ua);
+  })();
+  function buildGlassFilters() {
+    if (!supportsRefraction) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('width', 0); svg.setAttribute('height', 0);
+    svg.style.position = 'absolute';
+    document.body.appendChild(svg);
+    const cache = {};
+    document.querySelectorAll('.glass').forEach(el => {
+      const w = Math.round(parseFloat(el.style.width)), h = Math.round(parseFloat(el.style.height));
+      const key = w + 'x' + h;
+      if (!cache[key]) {
+        // 둥근 사각형 가장자리에서 안쪽으로 굽는 변위 맵
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d'); const img = ctx.createImageData(w, h);
+        const r = Math.min(h, w) / 2, D = Math.min(GLASS.depth * .5, r);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          const px = x + .5, py = y + .5;
+          const cx = Math.min(Math.max(px, r), w - r), cy = Math.min(Math.max(py, r), h - r);
+          let dx = px - cx, dy = py - cy; const dist = Math.hypot(dx, dy);
+          const d = r - dist;                                   // 가장자리까지 거리
+          let nx = 0, ny = 0, m = 0;
+          if (dist > 0 && d < D && d > -1) { nx = dx / dist; ny = dy / dist; m = Math.pow(1 - Math.max(d, 0) / D, 2); }
+          const i = (y * w + x) * 4;
+          img.data[i] = 128 - nx * m * 127; img.data[i+1] = 128 - ny * m * 127; img.data[i+2] = 128; img.data[i+3] = 255;
+        }
+        ctx.putImageData(img, 0, 0);
+        const id = 'glass-' + key;
+        const S = GLASS.refraction * 28, disp = GLASS.dispersion * 4;
+        const f = document.createElementNS(NS, 'filter');
+        f.setAttribute('id', id);
+        ['x','y'].forEach(a => f.setAttribute(a, 0));
+        f.setAttribute('width', w); f.setAttribute('height', h);
+        f.setAttribute('filterUnits', 'userSpaceOnUse'); f.setAttribute('primitiveUnits', 'userSpaceOnUse');
+        f.setAttribute('color-interpolation-filters', 'sRGB');
+        const ch = (scale, mat, res) => `
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="d${res}"/>
+          <feColorMatrix in="d${res}" type="matrix" values="${mat}" result="${res}"/>`;
+        f.innerHTML = `<feImage href="${c.toDataURL()}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="map"/>
+          ${ch(S + disp, '1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0', 'r')}
+          ${ch(S,        '0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0', 'g')}
+          ${ch(S - disp, '0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0', 'b')}
+          <feBlend in="r" in2="g" mode="screen" result="rg"/>
+          <feBlend in="rg" in2="b" mode="screen"/>`;
+        svg.appendChild(f);
+        cache[key] = id;
+      }
+      const v = `blur(${GLASS.blur}px) url(#${cache[key]}) saturate(1.8)`;
+      el.style.backdropFilter = v; el.style.webkitBackdropFilter = v;
+    });
+  }
+  buildGlassFilters();
+
+  /* ---------- 스크롤 영역 높이 ---------- */
+  function layout(sc) {
+    const c = sc.querySelector('.content');
+    let bottom = 0;
+    c.querySelectorAll('img.sec').forEach(img => {
+      if (!img.naturalHeight) return;
+      bottom = Math.max(bottom, img.offsetTop + img.naturalHeight / 2);
+    });
+    c.style.height = (Math.max(bottom, 867) + TAB_SPACE) + 'px';
+  }
+  document.querySelectorAll('.screen').forEach(sc => {
+    sc.querySelectorAll('img.sec').forEach(img => img.complete ? layout(sc) : img.addEventListener('load', () => layout(sc)));
+    layout(sc);
+  });
+
+  function fit() {
+    const s = innerWidth <= 500 ? Math.min(innerWidth/375, innerHeight/867)
+                                : Math.min(1, (innerHeight - 32) / 867, (innerWidth - 16) / 375);
+    phone.style.transform = `scale(${s})`;
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------- 화면 전환 ---------- */
+  let current = 'home';
+  const stack = [];
+  setNav('home', true);
+
+  function show(id, mode) {
+    const scrollOf = s => byId(s).querySelector('.scroll');
+    if (id === current) { scrollOf(id).scrollTo({top:0, behavior:'smooth'}); return; }
+    const from = byId(current), to = byId(id);
+    const anim = (pre, fromCls) => {
+      to.classList.add(pre); to.classList.remove('hidden');
+      requestAnimationFrame(() => requestAnimationFrame(() => { to.classList.remove(pre); if (fromCls) from.classList.add(fromCls); }));
+    };
+    if (mode === 'push') {
+      stack.push(current); to.style.zIndex = 2; from.style.zIndex = 1;
+      scrollOf(id).scrollTop = 0; anim('push-in', 'push-out');
+      setTimeout(() => { from.classList.add('hidden'); from.classList.remove('push-out'); }, 400);
+    } else if (mode === 'pop') {
+      to.style.zIndex = 1; from.style.zIndex = 2; anim('push-out', 'push-in');
+      setTimeout(() => { from.classList.add('hidden'); from.classList.remove('push-in'); }, 400);
+    } else {
+      stack.length = 0; to.style.zIndex = 2; from.style.zIndex = 1;
+      scrollOf(id).scrollTop = 0; anim('fade');
+      setTimeout(() => from.classList.add('hidden'), 260);
+    }
+    current = id;
+    setNav(id);
+    setTab(id);
+  }
+  function back() { if (stack.length) show(stack.pop(), 'pop'); else if (current !== 'home') show('home'); }
+
+  document.addEventListener('click', e => {
+    const h = e.target.closest('.hot'); if (!h) return;
+    e.preventDefault();
+    if (h.dataset.go) show(h.dataset.go);
+    else if (h.dataset.push) show(h.dataset.push, 'push');
+    else if ('back' in h.dataset) back();
+    else if ('top' in h.dataset) byId(current).querySelector('.scroll').scrollTo({top:0, behavior:'smooth'});
+  });
+  addEventListener('keydown', e => {
+    if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('debug');
+    if (e.key === 'ArrowLeft' || e.key === 'Escape') back();
+  });
+
+  // 마우스 드래그 스크롤 (데스크톱 시연용)
+  document.querySelectorAll('.scroll').forEach(el => {
+    let y0 = null, s0 = 0, moved = false;
+    el.addEventListener('mousedown', e => { y0 = e.clientY; s0 = el.scrollTop; moved = false; });
+    addEventListener('mousemove', e => { if (y0 === null) return; const d = e.clientY - y0; if (Math.abs(d) > 4) moved = true; el.scrollTop = s0 - d / (phone.getBoundingClientRect().height / 867); });
+    addEventListener('mouseup', () => { y0 = null; });
+    el.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  });
+})();
+</script>

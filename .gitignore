@@ -1,0 +1,11 @@
+.DS_Store
+# 예전 방식에서 쓰던, 지금은 안 쓰는 이미지
+img/home_live.png
+img/home_tab.png
+img/home_top.png
+img/my_content.png
+img/my_gnb.png
+img/my_tab.png
+img/pdp_content.png
+img/pdp_gnb.png
+img/pdp_tab.png
