@@ -43,13 +43,24 @@
   .el.pill .fg { position:absolute; inset:0; background-repeat:no-repeat; background-size:375px auto; }
   /* 들어오기 전 / 나간 뒤 상태 */
   .el.off { opacity:0; pointer-events:none; }
-  .el.off.a-left  { clip-path: inset(0 calc(100% - 52px) 0 0 round 26px); transform: translateX(-6px) scale(.94); }
-  .el.off.a-right { clip-path: inset(0 0 0 calc(100% - 52px) round 26px); transform: translateX(6px) scale(.94); }
-  .el.pill.off.a-left  { clip-path: inset(0 calc(100% - 60px) 0 0 round 30px); }
-  .el.pill.off.a-right { clip-path: inset(0 0 0 calc(100% - 60px) round 30px); }
-  .el.off.a-pop   { transform: scale(.6); }
-  .el.off.a-down  { transform: translateY(-10px); }
-  .el.leaving { transition-duration: calc(var(--dur) * .7); }
+  /* 사라질 때: 크기 변화 없이 페이드만 */
+  /* 화면 전환 때 새로 나타나는 GNB 버튼·탭바: 젤리를 눌렀다 손을 뗀 느낌 —
+     제자리에서 살짝 눌린(납작) 모양으로 나타나 → 톡 튕기며(아주 살짝 지나침) 원래 모양으로 복귀. 이동 없음 */
+  @keyframes jelly-pop {
+    0%   { opacity:0; transform: scale(1.05, .9);  }
+    18%  { opacity:1; transform: scale(1.05, .9);  animation-timing-function: cubic-bezier(.3,1.4,.5,1); }
+    62%  {            transform: scale(.985, 1.02); animation-timing-function: ease-out; }
+    100% {            transform: scale(1, 1); }
+  }
+  @keyframes jelly-pop-up {
+    0%   { opacity:0; transform: scale(1.04, .9);  }
+    18%  { opacity:1; transform: scale(1.04, .9);  animation-timing-function: cubic-bezier(.3,1.4,.5,1); }
+    62%  {            transform: scale(.99, 1.02); animation-timing-function: ease-out; }
+    100% {            transform: scale(1, 1); }
+  }
+  .el.enter { animation: jelly-pop .5s backwards; animation-delay: var(--d, 0ms); transform-origin:center center !important; }
+  .tab.pop > * { animation: jelly-pop-up .5s backwards; animation-delay: calc(140ms + var(--i, 0) * 60ms); transform-origin:50% 100%; }
+  @media (prefers-reduced-motion: reduce) { .el.enter, .tab.pop > * { animation:none; } }
   .el.pressable:active { filter:brightness(.94); }
 
   /* 고정 탭바 레이어 */
@@ -58,7 +69,7 @@
   /* 부모에 opacity를 주면 backdrop-filter가 끊기므로, 전환 애니메이션은 각 요소에 직접 */
   .tab > * { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
     transition-delay: inherit; }
-  .tab.off > * { opacity:0; transform: translateY(14px) scale(.97); }
+  .tab.off > * { opacity:0; }
   .tab.off .hot { pointer-events:none; }
   .tab img { display:block; user-select:none; -webkit-user-drag:none; }
 
@@ -305,6 +316,7 @@
       const stagger = (i++) * 45;
       if (cur) {                                                       // 나가는 버튼: ease-in
         const n = cur.node;
+        n.classList.remove('enter');
         n.classList.add('leaving');
         n.style.transitionDelay = (instant ? 0 : stagger * .5) + 'ms';
         n.classList.add('off');
@@ -313,11 +325,11 @@
       if (d) {                                                         // 들어오는 버튼: ease-out
         const n = makeEl(screen, key, d);
         if (!instant) {
-          n.classList.add('off');
-          n.style.transitionDelay = (130 + stagger) + 'ms';
+          // 젤리처럼 띠옹: 나가는 버튼이 빠진 뒤 순서대로 엇갈려 등장
+          n.style.setProperty('--d', (130 + stagger) + 'ms');
+          n.classList.add('enter');
+          n.addEventListener('animationend', () => n.classList.remove('enter'), { once:true });
           nav.appendChild(n);
-          n.getBoundingClientRect();
-          requestAnimationFrame(() => n.classList.remove('off'));
         } else nav.appendChild(n);
         next[key] = { node:n, sig:s };
       }
@@ -329,6 +341,13 @@
     document.querySelectorAll('.tab').forEach(t => {
       const on = t.dataset.screen === screen;
       t.style.transitionDelay = on ? '140ms' : '0ms';
+      t.classList.remove('pop');
+      if (on) {
+        // 보이는 요소 순서대로 살짝씩 엇갈려 띠옹 (맨 위로 버튼 → 탭 pill/버튼들)
+        [...t.children].forEach((c, i) => c.style.setProperty('--i', c.classList.contains('hot') ? 0 : i));
+        t.getBoundingClientRect();              // 애니메이션 재시작
+        t.classList.add('pop');
+      }
       t.classList.toggle('off', !on);
     });
   }
