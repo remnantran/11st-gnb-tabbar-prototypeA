@@ -2,7 +2,7 @@
 
   python3 build.py
 
-- 11st-gnb-tabbar-prototype.html : 이미지를 base64로 넣은 단일 파일 (서버 없이 어디서든 열림)
+- 11st-gnb-tabbar-prototypeA.html : 이미지를 base64로 넣은 단일 파일 (서버 없이 어디서든 열림)
 - share.html             : claude.ai Artifact 재배포용 (doctype/head/body 태그 제거 + 안내 문구)
 """
 import base64
@@ -18,7 +18,7 @@ def inline(m):
     return "data:image/png;base64," + base64.b64encode(data).decode()
 
 single = re.sub(r"img/[A-Za-z0-9_./-]+\.png", inline, src)
-(ROOT / "11st-gnb-tabbar-prototype.html").write_text(single, encoding="utf-8")
+(ROOT / "11st-gnb-tabbar-prototypeA.html").write_text(single, encoding="utf-8")
 
 # 2) Artifact용
 share = src
@@ -33,4 +33,4 @@ share = share.replace(
 )
 (ROOT / "share.html").write_text(share, encoding="utf-8")
 
-print(f"11st-gnb-tabbar-prototype.html {len(single)/1e6:.1f}MB, share.html {len(share)/1e3:.0f}KB")
+print(f"11st-gnb-tabbar-prototypeA.html {len(single)/1e6:.1f}MB, share.html {len(share)/1e3:.0f}KB")
