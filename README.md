@@ -14,7 +14,7 @@ Figma: [K03Ye6qjq9vaqKREhSuN9o](https://www.figma.com/design/K03Ye6qjq9vaqKREhSu
 | `index.html` | 원본. 수정은 여기서만. GitHub Pages도 이 파일을 보여줌 |
 | `img/` | Figma 2x 내보내기 (CONTENTS, GNB 아이콘, `tab/` 탭바 아이콘). `_orig/`는 배경 키아웃 전 원본 |
 | `build.py` | 아래 두 파일 생성 |
-| `11st_tabbar_proto.html` | 이미지 내장 단일 파일 — 메일·메신저로 보내 더블클릭으로 열기 |
+| `11st-gnb-tabbar-prototype.html` | 이미지 내장 단일 파일 — 메일·메신저로 보내 더블클릭으로 열기 |
 | `share.html` | claude.ai Artifact 재배포용 |
 
 ## 수정 후 반영
