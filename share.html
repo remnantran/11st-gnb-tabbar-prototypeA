@@ -25,8 +25,12 @@
 
   /* 고정 GNB 레이어 */
   .nav { position:absolute; left:0; top:0; width:375px; z-index:10; pointer-events:none; }
-  .nav-bg { position:absolute; left:0; top:0; width:375px; height:148px; background:#fff;
+  .nav-bg { position:absolute; left:0; top:0; width:375px; height:147.5px; background:#fff;
     transition:height var(--dur) var(--ease); }
+  /* 홈 스크롤 시 카테고리 탭만 상단 고정: 상태바 뒤를 흰색으로 덮어 위로 밀려 올라가는 검색바를 가림 */
+  .nav-cover { position:absolute; left:0; top:0; width:375px; height:44px; background:#fff; z-index:2;
+    pointer-events:none; transition: opacity var(--dur) var(--ease); }
+  .nav-cover.hide { opacity:0; }
   .el { position:absolute; background-repeat:no-repeat; background-size:375px auto; pointer-events:auto;
     will-change:transform, opacity, clip-path;
     transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), clip-path var(--dur) var(--ease);
@@ -148,6 +152,12 @@
 
   .hot { position:absolute; pointer-events:auto; cursor:pointer; border-radius:12px; }
   .hot:active { background:rgba(0,0,0,.06); }
+  /* 탭바 아이콘 눌림: 박스 대신 아이콘(28px, 칸 위에서 8px)만 감싸는 원. 텍스트는 감싸지 않음 */
+  .tab .hot:not([data-top]):active { background:none; }
+  .tab .hot:not([data-top])::before { content:""; position:absolute; left:50%; top:23px; width:34px; height:34px;
+    margin:-17px 0 0 -17px; border-radius:50%; background:rgba(0,0,0,.07);
+    opacity:0; transform:scale(.7); transition: opacity .18s ease, transform .22s var(--ease); }
+  .tab .hot:not([data-top]):active::before { opacity:1; transform:scale(1); transition-duration:.08s, .12s; }
   body.debug .hot, body.debug .el.pressable { outline:2px dashed rgba(255,0,56,.8); }
 
   .hint { position:fixed; left:16px; bottom:16px; color:#8e8e93; font-size:12px; line-height:1.5; }
@@ -178,7 +188,7 @@
   </section>
 
   <!-- 고정 GNB: 버튼 단위로 잘라서 화면 전환 시 개별 애니메이션 -->
-  <div class="nav" id="nav"><div class="nav-bg" id="navBg"></div></div>
+  <div class="nav" id="nav"><div class="nav-bg" id="navBg"></div><div class="nav-cover hide" id="navCover"></div></div>
 
   <!-- 고정 탭바 -->
   <div class="tabs">
@@ -238,11 +248,11 @@
   /* ---------- GNB 요소 정의 (375 기준 좌표, 그림자 여유 4px 포함) ---------- */
   // key가 같은 요소는 같은 "자리"로 보고, 화면이 바뀌면 나가고/들어오며 모핑
   const GNB = {
-    home: { h:148, img:'img/home_gnb.png', els:{
+    home: { h:147.5, img:'img/home_gnb.png', els:{   // GNB 그림이 147.5px에서 끝남(마지막 1px = 회색 구분선)
       status: { x:0,   y:0,   w:375, h:44, wide:true },
       left:   { x:12,  y:46,  w:299, h:52, anim:'a-left' },              // 검색바
       right:  { x:311, y:46,  w:52,  h:52, anim:'a-right' },             // 장바구니
-      tabs:   { x:0,   y:100, w:375, h:48, wide:true, anim:'a-down' },   // 카테고리 탭
+      tabs:   { x:0,   y:100, w:375, h:47.5, wide:true, anim:'a-down' }, // 카테고리 탭 (회색 라인까지)
     }},
     // 나의11번가·PDP: BG opacity 0 → GNB 배경 없음, 스크롤 콘텐츠가 버튼 뒤로 그대로 지나감
     // 버튼 박스 = Figma 버튼 영역 + 사방 8px(그림자 여유)
@@ -274,6 +284,7 @@
       n.innerHTML = '<div class="bg"></div><div class="fg"></div>';
       Object.assign(n.lastChild.style, { backgroundImage: bgImg, backgroundPosition: bgPos });
     } else Object.assign(n.style, { backgroundImage: bgImg, backgroundPosition: bgPos });
+    if (key === 'status') n.style.zIndex = 3;   // 흰 덮개(nav-cover) 위
     if (d.action === 'back') { n.title = '뒤로'; n.addEventListener('click', () => back()); }
     return n;
   }
@@ -452,6 +463,23 @@
   const stack = [];
   setNav('home', true);
 
+  /* ---------- 홈: 스크롤하면 카테고리 탭만 상단 고정 ----------
+     검색바 줄(56px, y44~100)이 스크롤만큼 위로 밀려 상태바 뒤로 사라지고,
+     카테고리 탭(y100)은 상태바 바로 아래(y44)까지 올라와 고정. 흰 GNB 배경도 함께 줄어듦 */
+  const navCover = document.getElementById('navCover');
+  const homeScrollEl = document.querySelector('#home .scroll');
+  const STICK = 56;
+  function syncHomeNav() {
+    const onHome = current === 'home';
+    const off = onHome ? Math.min(Math.max(homeScrollEl.scrollTop, 0), STICK) : 0;
+    const t = off ? `0 -${off}px` : '';
+    ['left', 'right', 'tabs'].forEach(k => { const n = live[k]; if (n && n.node.parentNode && onHome) n.node.style.translate = t; });
+    navBg.style.translate = t;
+    navCover.classList.toggle('hide', !onHome);
+  }
+  homeScrollEl.addEventListener('scroll', syncHomeNav, { passive:true });
+  syncHomeNav();
+
   function show(id, mode) {
     const scrollOf = s => byId(s).querySelector('.scroll');
     if (id === current) { scrollOf(id).scrollTo({top:0, behavior:'smooth'}); return; }
@@ -475,6 +503,7 @@
     current = id;
     setNav(id);
     setTab(id);
+    syncHomeNav();
   }
   function back() { if (stack.length) show(stack.pop(), 'pop'); else if (current !== 'home') show('home'); }
 
