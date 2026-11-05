@@ -1,6 +1,6 @@
 # 11번가 GNB·탭바 아이디에이션 프로토타입
 
-**보기:** https://remnantran.github.io/11st-tabbar-proto/
+**보기:** https://remnantran.github.io/11st-gnb-tabbar-prototype/
 
 홈 → 탭바 **나의11번가** → 가운데 **비비고 배너** → PDP. 화면 스크롤, GNB 버튼 ease-in-out 모핑, glass 탭바(굴절 효과는 Chrome 전용).
 키보드: `H` 핫스팟 보기, `←`/`Esc` 뒤로.
