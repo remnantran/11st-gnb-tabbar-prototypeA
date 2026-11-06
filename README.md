@@ -3,6 +3,7 @@
 **보기:** https://remnantran.github.io/11st-gnb-tabbar-prototypeA/
 
 홈 → 탭바 **나의11번가** → 가운데 **비비고 배너** → PDP. 화면 스크롤, GNB 버튼 ease-in-out 모핑, glass 탭바(굴절 효과는 Chrome 전용).
+PDP GNB의 ←는 뒤로, 11번가 로고는 홈으로 가요. 홈 맨 아래까지 내리면 탭바 왼쪽에 둥둥이가 나오고, 누르면 펼쳐져요.
 키보드: `H` 핫스팟 보기, `←`/`Esc` 뒤로.
 
 Figma: [K03Ye6qjq9vaqKREhSuN9o](https://www.figma.com/design/K03Ye6qjq9vaqKREhSuN9o/) — 홈 55:28520, 나의11번가 55:28728, PDP 55:29101
@@ -12,7 +13,7 @@ Figma: [K03Ye6qjq9vaqKREhSuN9o](https://www.figma.com/design/K03Ye6qjq9vaqKREhSu
 | 파일 | 설명 |
 |---|---|
 | `index.html` | 원본. 수정은 여기서만. GitHub Pages도 이 파일을 보여줌 |
-| `img/` | Figma 2x 내보내기 (CONTENTS, GNB 아이콘, `tab/` 탭바 아이콘). `_orig/`는 배경 키아웃 전 원본 |
+| `img/` | Figma 2x 내보내기 (CONTENTS, GNB 아이콘, `tab/` 탭바 아이콘). `_orig/`는 배경 키아웃 전 원본, `_orig/v1/`은 GNB·탭바 새 디자인 적용 전 이미지 |
 | `build.py` | 아래 두 파일 생성 |
 | `11st-gnb-tabbar-prototypeA.html` | 이미지 내장 단일 파일 — 메일·메신저로 보내 더블클릭으로 열기 |
 | `share.html` | claude.ai Artifact 재배포용 |

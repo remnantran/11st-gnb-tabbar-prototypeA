@@ -42,7 +42,8 @@
     clip-path: inset(0 0 0 0 round 26px); }
   .el.wide { clip-path: inset(0 0 0 0); }
   /* BG 투명(0%) 화면용: 버튼 배경은 CSS (Figma: #FFF 80%, shadow 0 2 6 #000 6% + 0 0 1 #000 28%) */
-  .el.pill { clip-path: inset(0 0 0 0 round 30px); background-image:none !important; }
+  /* 투명 그림이라 자를 필요 없음 → 알약 밖으로 살짝 나온 숫자 배지도 그대로 보이게 */
+  .el.pill { clip-path: none; background-image:none !important; }
   .el.pill .bg { position:absolute; inset:8px; border-radius:999px; background:rgba(255,255,255,.8);
     box-shadow: 0 2px 6px rgba(0,0,0,.06), 0 0 1px rgba(0,0,0,.28); }
   .el.pill .fg { position:absolute; inset:0; background-repeat:no-repeat; background-size:375px auto; }
@@ -67,6 +68,10 @@
   .tab.pop > * { animation: jelly-pop-up .5s backwards; animation-delay: calc(140ms + var(--i, 0) * 60ms); transform-origin:50% 100%; }
   @media (prefers-reduced-motion: reduce) { .el.enter, .tab.pop > * { animation:none; } }
   .el.pressable:active { filter:brightness(.94); }
+  /* GNB 버튼 안 누르는 영역: 누르면 그 부분만 살짝 어두운 원 */
+  .el .zone { position:absolute; z-index:2; cursor:pointer; border-radius:18px; }
+  .el .zone:active { background:rgba(0,0,0,.06); }
+  body.debug .el .zone { outline:2px dashed rgba(255,0,56,.8); }
 
   /* 고정 탭바 레이어 */
   .tabs { position:absolute; left:0; bottom:0; width:375px; height:226px; z-index:10; pointer-events:none; }
@@ -101,27 +106,27 @@
   .solid { position:absolute; border-radius:999px; background:#FF0038;
     box-shadow: 0 3px 10px rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.14); }
   /* ---------- 둥둥이: 홈 맨 아래(삼성전자 갤럭시 배너 끝) 도달 시 탭바 좌측에 젤리처럼 등장 ----------
-     Figma 홈-둥둥이: 둥둥이 16,150 56x56 (shadow 0 1 6 #000 10%), 탭 pill 16→80 / 343→280, 칸 69→56 */
+     Figma 홈-둥둥이(79:54836): 둥둥이 17.5,158 52x52 (shadow 0 1 6 #000 10%), 탭 pill 16→77.5 / 343→280, 칸 85.75→70 */
   .tab > .pill-anim { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
     left .5s var(--ease), width .5s var(--ease); }
   .pill-anim .slot { transition: margin .5s var(--ease); }
-  .tab.dd-on .pill-anim { left:80px !important; width:280px !important; }
-  .tab.dd-on .pill-anim .slot { margin:0 -6.5px; }
+  .tab.dd-on .pill-anim { left:77.5px !important; width:280px !important; }
+  .tab.dd-on .pill-anim .slot { margin:0 -7.875px; }
   .tab .hot.mv { transition: left .5s var(--ease), width .5s var(--ease); }
-  .tab.dd-on .hot.go-home { left:192px !important; width:56px !important; }
-  .tab.dd-on .hot.go-my   { left:248px !important; width:56px !important; }
-  .dd-wrap { position:absolute; left:16px; top:150px; width:56px; height:56px; pointer-events:none; }
-  /* 둥둥이 본체: 접힘 56x56 원 ↔ 펼침 118x56 알약 (Figma 홈-둥둥이-펼쳐짐). 반지름 28 유지한 채 폭만 늘어남 */
-  .dd { position:absolute; left:0; top:0; width:56px; height:56px; border-radius:28px; overflow:hidden;
+  .tab.dd-on .hot.go-my   { left:217.5px !important; width:70px !important; }
+  .dd-wrap { position:absolute; left:17.5px; top:158px; width:52px; height:52px; pointer-events:none; }
+  /* 둥둥이 본체: 접힘 52x52 원 ↔ 펼침 118x52 알약 (Figma 홈-둥둥이-펼쳐짐). 반지름 26 유지한 채 폭만 늘어남
+     바탕 그림(118x56)은 위아래 2px씩 잘라 52 높이에 맞춤 */
+  .dd { position:absolute; left:0; top:0; width:52px; height:52px; border-radius:26px; overflow:hidden;
     box-shadow:0 1px 6px rgba(0,0,0,.10);
     transform-origin:50% 100%; transform:translateY(110px); visibility:hidden;
     transition: transform .32s cubic-bezier(.5,0,.75,0), visibility 0s linear .32s, width .3s var(--ease); }
-  .dd img { position:absolute; left:0; top:0; height:56px; display:block; user-select:none; -webkit-user-drag:none; }
+  .dd img { position:absolute; left:0; top:-2px; height:56px; display:block; user-select:none; -webkit-user-drag:none; }
   /* 하나의 바탕(주황→핑크, 테두리까지 꽉 채운 그림)을 .dd의 둥근 클립이 드러내는 방식
      → 접힘/펼침 중에 따로 페이드되는 원형 그림이 없어서 외곽선이 생기지 않음 */
   .dd img.dd-base { width:118px; }
   /* 문구: Figma 접힘 x56 → 펼침 x46. 펼칠 때 오른쪽에서 10px 미끄러지며 나타남 */
-  .dd img.dd-text { left:47px; top:13.5px; width:52.5px; height:28px; opacity:0; transform:translateX(10px);
+  .dd img.dd-text { left:47px; top:11.5px; width:52.5px; height:28px; opacity:0; transform:translateX(10px);
     transition: opacity .2s ease, transform .3s var(--ease); }
   .tab.dd-open .dd img.dd-text { opacity:1; transform:none;
     transition: opacity .36s ease .1s, transform .5s cubic-bezier(.22,1,.36,1) .06s; }
@@ -129,18 +134,18 @@
   .tab.dd-open .dd { width:118px; }
   .tab.dd-on .dd { transition: width .56s cubic-bezier(.22,1,.36,1); }
   .tab.dd-on:not(.dd-open) .dd { transition: width .44s var(--ease); }
-  /* 펼치면 오른쪽 탭바는 화면 밖 오른쪽으로 밀려남 (Figma: x142) */
-  .tab.dd-open .pill-anim { left:142px !important; transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
-    left .56s cubic-bezier(.22,1,.36,1), width .5s var(--ease); }
-  .tab.dd-open .hot.go-home { left:254px !important; width:56px !important; }
-  .tab.dd-open .hot.go-my   { left:310px !important; width:56px !important; }
-  /* 펼침 유도 화살표 (Figma arrow(삭제금지) 42.2,22.5 10x12, 흰 1.5px 쉐브론 2개)
+  /* 펼치면 오른쪽 탭바는 오른쪽으로 비켜서며 좁아짐 (Figma 79:56491: x142, 폭 217, 칸 54.25) */
+  .tab.dd-open .pill-anim { left:142px !important; width:217px !important; transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
+    left .56s cubic-bezier(.22,1,.36,1), width .56s cubic-bezier(.22,1,.36,1); }
+  .tab.dd-open .pill-anim .slot { margin:0 -15.75px; transition: margin .56s cubic-bezier(.22,1,.36,1); }
+  .tab.dd-open .hot.go-my   { left:250.5px !important; width:54.25px !important; }
+  /* 펼침 유도 화살표 (Figma arrow(삭제금지) 40.2,20.5 10x12, 흰 1.5px 쉐브론 2개)
      - 화이트 그라데이션 마스크: 좌측 투명 → 우측 진한 흰색
      - 쉐브론이 좌→우로 계속 흘러가며, 왼쪽에서 스며 나와 오른쪽 끝에서 사라짐 */
-  .dd-arrow { position:absolute; right:.8px; top:22.5px; width:16px; height:12px; overflow:visible; pointer-events:none;
+  .dd-arrow { position:absolute; right:1.8px; top:20.5px; width:16px; height:12px; overflow:visible; pointer-events:none;
     transition: opacity .16s ease, right .56s cubic-bezier(.22,1,.36,1); }
-  /* 펼친 상태: 오른쪽 끝을 따라 이동(Figma 103,22.5) + 좌우 반전 → 왼쪽을 가리키며 우→좌로 흐름, 왼쪽이 진함 */
-  .tab.dd-open .dd-arrow { right:2px; }
+  /* 펼친 상태: 오른쪽 끝을 따라 이동(Figma 103,19.5) + 좌우 반전 → 왼쪽을 가리키며 우→좌로 흐름, 왼쪽이 진함 */
+  .tab.dd-open .dd-arrow { right:3px; }
   .dd-arrow.flip { transform: scaleX(-1); }
   .dd-arrow.swap { opacity:0; }
   .dd-arrow .chev { fill:none; stroke:#fff; stroke-width:1.5px; animation: chev-flow 1.5s linear infinite; }
@@ -168,9 +173,9 @@
 
   .hot { position:absolute; pointer-events:auto; cursor:pointer; border-radius:12px; }
   .hot:active { background:rgba(0,0,0,.06); }
-  /* 탭바 아이콘 눌림: 박스 대신 아이콘(28px, 칸 위에서 8px)만 감싸는 원. 텍스트는 감싸지 않음 */
+  /* 탭바 아이콘 눌림: 박스 대신 아이콘(28px, 칸 위에서 6px)만 감싸는 원. 텍스트는 감싸지 않음 */
   .tab .hot:not([data-top]):active { background:none; }
-  .tab .hot:not([data-top])::before { content:""; position:absolute; left:50%; top:23px; width:34px; height:34px;
+  .tab .hot:not([data-top])::before { content:""; position:absolute; left:50%; top:20px; width:34px; height:34px;
     margin:-17px 0 0 -17px; border-radius:50%; background:rgba(0,0,0,.07);
     opacity:0; transform:scale(.7); transition: opacity .18s ease, transform .22s var(--ease); }
   .tab .hot:not([data-top]):active::before { opacity:1; transform:scale(1); transition-duration:.08s, .12s; }
@@ -210,10 +215,11 @@
 
   <!-- 고정 탭바 -->
   <div class="tabs">
+    <!-- Figma A안 홈 탭바(55:28684): 맨 위로 y104 / 탭 pill 16,158 343x52, 흰 80% — 카테고리 · 검색 · 나의11번가 · 최근본 (칸 85.75) -->
     <div class="tab" data-screen="home">
-      <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
-      <div class="glass pill-anim" id="homePill" style="left:16px;top:150px;width:343px;height:56px"><div class="items">
-        <img class="slot" src="img/tab/home_1.png" style="width:69px"><img class="slot" src="img/tab/home_2.png" style="width:69px"><img class="slot" src="img/tab/home_3.png" style="width:69px"><img class="slot" src="img/tab/home_4.png" style="width:69px"><img class="slot" src="img/tab/home_5.png" style="width:69px">
+      <div class="glass f80" style="left:315px;top:104px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
+      <div class="glass f80 pill-anim" id="homePill" style="left:16px;top:158px;width:343px;height:52px"><div class="items">
+        <img class="slot" src="img/tab/home_1.png" style="width:85.75px"><img class="slot" src="img/tab/home_2.png" style="width:85.75px"><img class="slot" src="img/tab/home_3.png" style="width:85.75px"><img class="slot" src="img/tab/home_4.png" style="width:85.75px">
       </div></div>
       <div class="dd-wrap"><div class="dd" title="둥둥이"><img class="dd-base" src="img/tab/dungdung_base.png" alt="둥둥이"><img class="dd-text" src="img/tab/dungdung_text.png" alt="LG전자 1DAY 특가"><svg class="dd-arrow" viewBox="-3 0 16 12" aria-hidden="true">
         <defs>
@@ -229,26 +235,27 @@
           <path class="chev b" d="M1.17 .83 4.83 5.74 1.17 10.83"/>
         </g>
       </svg></div></div>
-      <a class="hot" data-top style="left:315px;top:91px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
-      <a class="hot mv go-home" style="left:153px;top:149px;width:69px;height:56px" data-go="home" title="홈"></a>
-      <a class="hot mv go-my" style="left:222px;top:149px;width:69px;height:56px" data-go="my" title="나의11번가"></a>
+      <a class="hot" data-top style="left:315px;top:104px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
+      <a class="hot mv go-my" style="left:187.5px;top:158px;width:85.75px;height:52px" data-go="my" title="나의11번가"></a>
     </div>
+    <!-- 나의11번가 탭바(55:29051): 맨 위로 y103 / pill 16,157.5 343x52, 흰 70% — 뒤로 · 홈 · 카테고리 · 검색 · 나의11번가 · 11톡 · 최근본 (칸 49) -->
     <div class="tab off" data-screen="my">
-      <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
-      <div class="glass" style="left:16px;top:150px;width:343px;height:56px"><div class="items">
+      <div class="glass" style="left:315px;top:103px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
+      <div class="glass" style="left:16px;top:157.5px;width:343px;height:52px"><div class="items">
         <img src="img/tab/my_1.png" style="width:49px"><img src="img/tab/my_2.png" style="width:49px"><img src="img/tab/my_3.png" style="width:49px"><img src="img/tab/my_4.png" style="width:49px"><img src="img/tab/my_5.png" style="width:49px"><img src="img/tab/my_6.png" style="width:49px"><img src="img/tab/my_7.png" style="width:49px">
       </div></div>
-      <a class="hot" data-top style="left:315px;top:91px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
-      <a class="hot" style="left:16px;top:149px;width:49px;height:56px" data-go="home" title="뒤로"></a>
-      <a class="hot" style="left:163px;top:149px;width:49px;height:56px" data-go="home" title="홈"></a>
-      <a class="hot" style="left:212px;top:149px;width:49px;height:56px" data-go="my" title="나의11번가"></a>
+      <a class="hot" data-top style="left:315px;top:103px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
+      <a class="hot" style="left:16px;top:157.5px;width:49px;height:52px" data-go="home" title="뒤로"></a>
+      <a class="hot" style="left:65px;top:157.5px;width:49px;height:52px" data-go="home" title="홈"></a>
+      <a class="hot" style="left:212px;top:157.5px;width:49px;height:52px" data-go="my" title="나의11번가"></a>
     </div>
+    <!-- PDP 탭바(55:29258): 맨 위로 y103 / 선물하기 17.5 52x52 · 장바구니 77.5 136x52 · 바로 구매 221.5 136x52 (y157.5) -->
     <div class="tab off" data-screen="pdp">
-      <div class="glass" style="left:315px;top:91px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
-      <div class="glass f60" style="left:16px;top:150px;width:56px;height:56px"><div class="items"><img src="img/tab/pdp_gift.png" style="width:56px"></div></div>
-      <div class="glass f80 stroke-red" style="left:80px;top:150px;width:136px;height:56px"><div class="items"><img src="img/tab/pdp_cart.png" style="width:80px"></div></div>
-      <div class="solid" style="left:224px;top:150px;width:136px;height:56px"><div class="items"><img src="img/tab/pdp_buy.png" style="width:79.5px"></div></div>
-      <a class="hot" data-top style="left:315px;top:91px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
+      <div class="glass f80" style="left:315px;top:103px;width:44px;height:44px"><div class="items"><img src="img/tab/top.png" style="width:36px"></div></div>
+      <div class="glass f80" style="left:17.5px;top:157.5px;width:52px;height:52px"><div class="items"><img src="img/tab/pdp_gift.png" style="width:52px"></div></div>
+      <div class="glass f80 stroke-red" style="left:77.5px;top:157.5px;width:136px;height:52px"><div class="items"><img src="img/tab/pdp_cart.png" style="width:80px"></div></div>
+      <div class="solid" style="left:221.5px;top:157.5px;width:136px;height:52px"><div class="items"><img src="img/tab/pdp_buy.png" style="width:79.5px"></div></div>
+      <a class="hot" data-top style="left:315px;top:103px;width:44px;height:44px;border-radius:22px" title="맨 위로"></a>
     </div>
   </div>
 
@@ -266,24 +273,26 @@
   /* ---------- GNB 요소 정의 (375 기준 좌표, 그림자 여유 4px 포함) ---------- */
   // key가 같은 요소는 같은 "자리"로 보고, 화면이 바뀌면 나가고/들어오며 모핑
   const GNB = {
+    // Figma A안(GNB y-0.5): 버튼 알약 높이 44, y49.5 / 카테고리 탭 y103.5~147.5
     home: { h:147.5, img:'img/home_gnb.png', els:{   // GNB 그림이 147.5px에서 끝남(마지막 1px = 회색 구분선)
-      status: { x:0,   y:0,   w:375, h:44, wide:true },
-      left:   { x:12,  y:46,  w:299, h:52, anim:'a-left' },              // 검색바
-      right:  { x:311, y:46,  w:52,  h:52, anim:'a-right' },             // 장바구니
-      tabs:   { x:0,   y:100, w:375, h:47.5, wide:true, anim:'a-down' }, // 카테고리 탭 (회색 라인까지)
+      status: { x:0,   y:0,    w:375, h:44, wide:true },
+      left:   { x:12,  y:45.5, w:246, h:52, anim:'a-left' },              // 검색바 (16~254)
+      right:  { x:258, y:45.5, w:106, h:52, anim:'a-right' },             // 알림 + 장바구니 (262~360)
+      tabs:   { x:0,   y:103.5, w:375, h:44, wide:true, anim:'a-down' },  // 카테고리 탭 (회색 라인까지)
     }},
     // 나의11번가·PDP: BG opacity 0 → GNB 배경 없음, 스크롤 콘텐츠가 버튼 뒤로 그대로 지나감
     // 버튼 박스 = Figma 버튼 영역 + 사방 8px(그림자 여유)
     my: { h:0, img:'img/my_gnb_fg.png', els:{
-      status: { x:0,   y:0,   w:375, h:44, wide:true },
-      left:   { x:8,   y:42,  w:126, h:60, anim:'a-left', pill:true },               // 허란님 + 설정
-      right:  { x:245, y:42,  w:122, h:60, anim:'a-right', pill:true },              // 검색 + 장바구니
+      status: { x:0,   y:0,    w:375, h:44, wide:true },
+      left:   { x:8,   y:41.5, w:126, h:60, anim:'a-left', pill:true },               // 허란님 + 설정 (16~126)
+      right:  { x:207, y:41.5, w:160, h:60, anim:'a-right', pill:true },              // 알림 + 검색 + 장바구니 (215~359)
     }},
     pdp: { h:0, img:'img/pdp_gnb_fg.png', els:{
-      status: { x:0,   y:0,   w:375, h:44, wide:true },
-      back:   { x:8,   y:42,  w:60,  h:60, anim:'a-pop', action:'back', pill:true }, // 뒤로
-      left:   { x:60,  y:42,  w:156, h:60, anim:'a-left', pill:true },               // 11번가 | 비비고
-      right:  { x:245, y:42,  w:122, h:60, anim:'a-right', pill:true },              // 검색 + 장바구니
+      status: { x:0,   y:0,    w:375, h:44, wide:true },
+      // ← 11번가 | 비비고 (16~190): ← 누르면 뒤로, 11번가 로고 누르면 홈 (Figma 뒤로 26,53.5 36x36 / 로고 66,62.6 44x18.9)
+      left:   { x:8,   y:41.5, w:190, h:60, anim:'a-left', pill:true,
+                zones:[ { x:18, y:12, w:36, h:36, go:'back', title:'뒤로' }, { x:56, y:12, w:56, h:36, go:'home', title:'홈' } ] },
+      right:  { x:207, y:41.5, w:160, h:60, anim:'a-right', pill:true },              // 알림 + 검색 + 장바구니
     }},
   };
   // 상태바는 세 화면 공통으로 투명 배경 버전 사용 (홈은 흰 nav-bg 위에 놓임)
@@ -304,6 +313,14 @@
     } else Object.assign(n.style, { backgroundImage: bgImg, backgroundPosition: bgPos });
     if (key === 'status') n.style.zIndex = 3;   // 흰 덮개(nav-cover) 위
     if (d.action === 'back') { n.title = '뒤로'; n.addEventListener('click', () => back()); }
+    // 버튼 안의 누르는 영역 (뒤로 / 홈 등)
+    (d.zones || []).forEach(z => {
+      const a = document.createElement('a');
+      a.className = 'zone'; a.title = z.title;
+      Object.assign(a.style, { left:z.x + 'px', top:z.y + 'px', width:z.w + 'px', height:z.h + 'px' });
+      a.addEventListener('click', e => { e.stopPropagation(); z.go === 'back' ? back() : show(z.go); });
+      n.appendChild(a);
+    });
     return n;
   }
   // 픽셀이 같은 요소(위치·크기 동일 + 같은 모양)는 그대로 둠
@@ -451,7 +468,7 @@
   }
   ddEl.addEventListener('click', () => { if (ddOn) setDdOpen(!ddOpen); });
   homePill.addEventListener('transitionend', e => {
-    if (e.target === homePill && e.propertyName === 'width') applyGlass(homePill, ddOn ? 280 : 343, 56);
+    if (e.target === homePill && e.propertyName === 'width') applyGlass(homePill, ddOpen ? 217 : ddOn ? 280 : 343, 52);
   });
   let lastTop = 0;
   homeScroll.addEventListener('scroll', () => {
@@ -490,11 +507,11 @@
   setNav('home', true);
 
   /* ---------- 홈: 스크롤하면 카테고리 탭만 상단 고정 ----------
-     검색바 줄(56px, y44~100)이 스크롤만큼 위로 밀려 상태바 뒤로 사라지고,
-     카테고리 탭(y100)은 상태바 바로 아래(y44)까지 올라와 고정. 흰 GNB 배경도 함께 줄어듦 */
+     검색바 줄(59.5px, y44~103.5)이 스크롤만큼 위로 밀려 상태바 뒤로 사라지고,
+     카테고리 탭(y103.5)은 상태바 바로 아래(y44)까지 올라와 고정. 흰 GNB 배경도 함께 줄어듦 */
   const navCover = document.getElementById('navCover');
   const homeScrollEl = document.querySelector('#home .scroll');
-  const STICK = 56;
+  const STICK = 59.5;
   function syncHomeNav() {
     const onHome = current === 'home';
     const off = onHome ? Math.min(Math.max(homeScrollEl.scrollTop, 0), STICK) : 0;
