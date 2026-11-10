@@ -36,11 +36,11 @@
     transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), clip-path var(--dur) var(--ease);
     clip-path: inset(0 0 0 0 round 26px); }
   .el.wide { clip-path: inset(0 0 0 0); }
-  /* BG 투명(0%) 화면용: 버튼 배경은 CSS (Figma: #FFF 80%, shadow 0 2 6 #000 6% + 0 0 1 #000 28%) */
+  /* BG 투명(0%) 화면용: 버튼 배경은 CSS (Figma: #FFF 80%, shadow 0 1 5 #000 5% + 0 0 1 #000 10%) */
   /* 투명 그림이라 자를 필요 없음 → 알약 밖으로 살짝 나온 숫자 배지도 그대로 보이게 */
   .el.pill { clip-path: none; background-image:none !important; }
   .el.pill .bg { position:absolute; inset:8px; border-radius:999px; background:rgba(255,255,255,.8);
-    box-shadow: 0 2px 6px rgba(0,0,0,.06), 0 0 1px rgba(0,0,0,.28); }
+    box-shadow: 0 1px 5px rgba(0,0,0,.05), 0 0 1px rgba(0,0,0,.10); }
   .el.pill .fg { position:absolute; inset:0; background-repeat:no-repeat; background-size:375px auto; }
   /* 들어오기 전 / 나간 뒤 상태 */
   .el.off { opacity:0; pointer-events:none; }
@@ -78,14 +78,14 @@
   .tab.off .hot { pointer-events:none; }
   .tab img { display:block; user-select:none; -webkit-user-drag:none; }
 
-  /* Figma: fill #FFF 70% + GLASS(radius 21, refraction .86, depth 25, light -45°, intensity .8) + drop shadow 0 1 6 #000 10% */
+  /* Figma: fill #FFF 70% + GLASS(radius 21, refraction .86, depth 25, light -45°, intensity .8) + drop shadow 0 1 5 #000 5% + 0 0 1 #000 10% */
   .glass { position:absolute; border-radius:999px; overflow:hidden; isolation:isolate;
     --fill: .7;
     background: rgba(255,255,255,var(--fill));
     -webkit-backdrop-filter: blur(10.5px) saturate(1.8);
             backdrop-filter: blur(10.5px) saturate(1.8);
     box-shadow:
-      0 1px 6px rgba(0,0,0,.10),
+      0 1px 5px rgba(0,0,0,.05), 0 0 1px rgba(0,0,0,.10),
       inset 1.2px 1.2px .5px -.5px rgba(255,255,255,.95),      /* 좌상단 빛 (-45°) */
       inset -1px -1px .5px -.5px rgba(255,255,255,.45),         /* 우하단 반사 */
       inset 0 0 0 .5px rgba(255,255,255,.55),
@@ -94,14 +94,14 @@
     background: linear-gradient(135deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 70%, rgba(255,255,255,.22) 100%); }
   .glass.f60 { --fill:.6; } .glass.f80 { --fill:.8; }
   .glass.stroke-red { box-shadow:
-      0 1px 6px rgba(0,0,0,.10), inset 0 0 0 1px rgba(255,0,56,.9),
+      0 1px 5px rgba(0,0,0,.05), 0 0 1px rgba(0,0,0,.10), inset 0 0 0 1px rgba(255,0,56,.9),
       inset 1.5px 1.5px .5px -.5px rgba(255,255,255,.95); }
   .glass .items, .solid .items { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
   .glass .items img, .solid .items img { height:auto; }
   .solid { position:absolute; border-radius:999px; background:#FF0038;
-    box-shadow: 0 3px 10px rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.14); }
+    box-shadow: 0 1px 5px rgba(0,0,0,.05), 0 0 1px rgba(0,0,0,.10); }
   /* ---------- 둥둥이: 홈 맨 아래(삼성전자 갤럭시 배너 끝) 도달 시 탭바 좌측에 젤리처럼 등장 ----------
-     Figma 홈-둥둥이(79:54836): 둥둥이 17.5,158 52x52 (shadow 0 1 6 #000 10%), 탭 pill 16→77.5 / 343→280, 칸 85.75→70 */
+     Figma 홈-둥둥이(79:54836): 둥둥이 17.5,158 52x52 (shadow 0 1 5 #000 5% + 0 0 1 #000 10%), 탭 pill 16→77.5 / 343→280, 칸 85.75→70 */
   .tab > .pill-anim { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
     left .5s var(--ease), width .5s var(--ease); }
   .pill-anim .slot { transition: margin .5s var(--ease); }
@@ -113,7 +113,7 @@
   /* 둥둥이 본체: 접힘 52x52 원 ↔ 펼침 118x52 알약 (Figma 홈-둥둥이-펼쳐짐). 반지름 26 유지한 채 폭만 늘어남
      바탕 그림(118x56)은 위아래 2px씩 잘라 52 높이에 맞춤 */
   .dd { position:absolute; left:0; top:0; width:52px; height:52px; border-radius:26px; overflow:hidden;
-    box-shadow:0 1px 6px rgba(0,0,0,.10);
+    box-shadow:0 1px 5px rgba(0,0,0,.05), 0 0 1px rgba(0,0,0,.10);
     transform-origin:50% 100%; transform:translateY(110px); visibility:hidden;
     transition: transform .32s cubic-bezier(.5,0,.75,0), visibility 0s linear .32s, width .3s var(--ease); }
   .dd img { position:absolute; left:0; top:-2px; height:56px; display:block; user-select:none; -webkit-user-drag:none; }
